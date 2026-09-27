@@ -510,22 +510,6 @@ python3 app.py
 | `/login` (POST multipart) | Redirect param in query string, credentials in multipart/form-data | `--request-file lab/login_multipart_request.txt` - CRLF-sensitive, this is the exact bug class that was found and fixed |
 | `/login2` (POST multipart) | Redirect param as a hidden multipart FIELD, not the query string | `--request-file lab/login_multipart_field_request.txt` |
 
-## Automated tests
-
-`tests/test_redirhunter.py` covers the security-critical pure functions -
-the ones that actually decide whether a finding gets reported, missed, or
-false-positived: `host_matches()`, `evaluate()`, `has_host_confusion_markers()`,
-payload rendering, all four input-parsing syntaxes, parameter pollution URL
-construction, fuzz-mode URL building, scheme auto-fixing, and path-injection
-point generation. Every regression found and fixed during development (the
-fragment-boundary false positive, the dot-segment false positive) has a
-dedicated test so it can't silently come back.
-
-```bash
-pip install pytest
-pytest tests/ -v
-```
-
 ## Notes on false positives / negatives
 
 - Verdicts are based on actually resolving the redirect target against the
