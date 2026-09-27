@@ -1,0 +1,6 @@
+POST /sso/login HTTP/1.1
+Host: 127.0.0.1:5000
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+username=admin&password=password123&url={}

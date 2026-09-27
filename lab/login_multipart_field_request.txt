@@ -1,0 +1,17 @@
+POST /login2 HTTP/1.1
+Host: 127.0.0.1:5000
+Content-Type: multipart/form-data; boundary=---------------------------45928961161f0c873ae24d262808b35f
+
+-----------------------------45928961161f0c873ae24d262808b35f
+Content-Disposition: form-data; name="identifier"
+
+01021784581
+-----------------------------45928961161f0c873ae24d262808b35f
+Content-Disposition: form-data; name="password"
+
+Ya123455
+-----------------------------45928961161f0c873ae24d262808b35f
+Content-Disposition: form-data; name="redirect"
+
+{}
+-----------------------------45928961161f0c873ae24d262808b35f--
