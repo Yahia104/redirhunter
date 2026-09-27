@@ -1,0 +1,5 @@
+POST /api/login?return_to={} HTTP/1.1
+Host: 127.0.0.1:5000
+Content-Type: application/json
+
+{"email": "user@example.com", "password": "hunter2"}
